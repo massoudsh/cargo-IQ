@@ -1,0 +1,35 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Vazirmatn", "Tahoma", sans-serif;
+  background: #f5f7fa;
+  color: #101828;
+}
+
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  color: #0b2545;
+  margin-bottom: 0.25rem;
+}
+
+.tagline {
+  color: #0f766e;
+  font-weight: 600;
+  margin: 0;
+}
+
+.description {
+  margin-top: 1.5rem;
+  line-height: 1.9;
+  color: #475467;
+}

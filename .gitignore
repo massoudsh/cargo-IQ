@@ -1,0 +1,10 @@
+# Noqte Platform
+.vibe/
+.noqte/
+
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.log

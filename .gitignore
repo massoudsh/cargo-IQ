@@ -1,6 +1,10 @@
 # Noqte Platform
 .vibe/
 .noqte/
+.whisper-cache/
+
+# GitHub wiki (separate git repo, pushed independently)
+/wiki/
 
 node_modules/
 dist/

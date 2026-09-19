@@ -23,3 +23,7 @@ cd apps/web && npm install && npm run dev   # فرانت‌اند روی پور�
 ```
 
 > نکته: ساخت (build) سنگین یا نصب حجیم dependency باید طبق سیاست کانتینر انجام شود.
+
+## لایسنس
+
+Apache License 2.0 — جزئیات در [`LICENSE`](LICENSE).

@@ -31,6 +31,7 @@ export default function App() {
   return (
     <main className="page">
       <header className="hero">
+        <img className="logo" src="/cargoiq-logo.svg" alt="CargoIQ" />
         <h1>CargoIQ</h1>
         <p className="tagline">هر محموله، بهترین تصمیم.</p>
       </header>

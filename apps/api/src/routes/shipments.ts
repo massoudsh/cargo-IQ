@@ -1,5 +1,6 @@
 import { Router } from "express";
-import type { ShipmentOption, ShipmentRequest } from "../types.js";
+import { recommendShipmentOptions } from "../decisionEngine.js";
+import type { ShipmentRequest } from "../types.js";
 
 export const shipmentsRouter = Router();
 
@@ -40,24 +41,7 @@ shipmentsRouter.post("/recommend", (req, res) => {
   }
 
   const request = req.body;
-  const mockOptions: ShipmentOption[] = [
-    {
-      forwarder: "نمونه فورواردر A",
-      mode: "sea",
-      estimatedCostUsd: 4200,
-      estimatedDeliveryDays: 28,
-      delayRiskScore: 0.18,
-      recommended: true,
-    },
-    {
-      forwarder: "نمونه فورواردر B",
-      mode: "air",
-      estimatedCostUsd: 9800,
-      estimatedDeliveryDays: 6,
-      delayRiskScore: 0.07,
-      recommended: false,
-    },
-  ];
+  const options = recommendShipmentOptions(request);
 
-  res.json({ request, options: mockOptions });
+  res.json({ request, options });
 });

@@ -44,3 +44,7 @@ GitHub Actions همین مسیرها را برای API و وب اجرا می‌�
 این پروژه تحت [MIT License](LICENSE) منتشر شده است.
 
 > نکته: ساخت (build) سنگین یا نصب حجیم dependency باید طبق سیاست کانتینر انجام شود.
+
+## لایسنس
+
+Apache License 2.0 — جزئیات در [`LICENSE`](LICENSE).

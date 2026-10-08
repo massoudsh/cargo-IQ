@@ -21,6 +21,14 @@ describe("POST /api/shipments/recommend", () => {
     expect(response.body.options.slice(1).every((option: { recommended: boolean }) => !option.recommended)).toBe(true);
   });
 
+  it("preserves a supplied request ID for tracing", async () => {
+    const response = await request(app)
+      .get("/health")
+      .set("x-request-id", "test-request-id");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["x-request-id"]).toBe("test-request-id");
+  });
   it("rejects invalid request payloads", async () => {
     const response = await request(app).post("/api/shipments/recommend").send({
       origin: "",

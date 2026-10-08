@@ -1,5 +1,8 @@
-import { createApp } from "./app.js";
+import { startTelemetry } from "./observability.js";
 
+await startTelemetry();
+
+const { createApp } = await import("./app.js");
 const PORT = process.env.PORT ?? 4000;
 const app = createApp();
 

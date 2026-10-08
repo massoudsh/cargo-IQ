@@ -33,18 +33,15 @@ cd apps/web && npm install && npm run dev   # فرانت‌اند روی پور�
 ## تست و CI
 
 ```bash
-npm ci --prefix apps/api && npm run typecheck --prefix apps/api && npm test --prefix apps/api
-npm ci --prefix apps/web && npm run typecheck --prefix apps/web && npm test --prefix apps/web && npm run build --prefix apps/web
+npm ci --prefix apps/api && npm run lint --prefix apps/api && npm run typecheck --prefix apps/api && npm test --prefix apps/api
+npm ci --prefix apps/web && npm run lint --prefix apps/web && npm run typecheck --prefix apps/web && npm test --prefix apps/web && npm run build --prefix apps/web
 ```
 
 GitHub Actions همین مسیرها را برای API و وب اجرا می‌کند.
 
-## License
+## معماری و امنیت
 
-این پروژه تحت [MIT License](LICENSE) منتشر شده است.
-
-> نکته: ساخت (build) سنگین یا نصب حجیم dependency باید طبق سیاست کانتینر انجام شود.
-
-## لایسنس
-
-Apache License 2.0 — جزئیات در [`LICENSE`](LICENSE).
+جزئیات جریان داده در [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) و کنترل‌های امنیتی در
+[`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md) ثبت شده است. برای اجرای محلی، `.env.example` را
+به `.env` کپی کنید. CI شامل typecheck، تست، build، CodeQL، secret scanning، Dependabot و SBOM است.
+API برای هر درخواست request ID و لاگ JSON ساختاریافته تولید می‌کند و اندازهٔ body را به ۳۲ کیلوبایت محدود می‌کند.

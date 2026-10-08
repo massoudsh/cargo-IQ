@@ -8,9 +8,6 @@ export const shipmentsRouter = Router();
  * POST /api/shipments/recommend
  * ورودی: مشخصات محموله (مبدأ، مقصد، نوع کالا، وزن/حجم، اولویت زمان/هزینه)
  * خروجی: گزینه‌های حمل رتبه‌بندی‌شده بر اساس هزینه، زمان تحویل تخمینی و ریسک تأخیر.
- *
- * TODO: اتصال به موتور تصمیم (مدل پیش‌بینی تأخیر/هزینه بر اساس داده‌ی تاریخی).
- * فعلاً یک پاسخ نمونه برمی‌گرداند تا فرانت‌اند بتواند توسعه پیدا کند.
  */
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;

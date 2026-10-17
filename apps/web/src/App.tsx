@@ -5,6 +5,7 @@ import type { RecommendResponse, ShipmentOption, ShipmentRequest } from "./types
 
 export default function App() {
   const [options, setOptions] = useState<ShipmentOption[]>([]);
+  const [confidence, setConfidence] = useState<number | undefined>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,9 +21,11 @@ export default function App() {
       if (!res.ok) throw new Error(`خطای سرور (${res.status})`);
       const data = (await res.json()) as RecommendResponse;
       setOptions(data.options);
+      setConfidence(data.confidence);
     } catch {
       setError("دریافت پیشنهاد با خطا مواجه شد. دوباره تلاش کنید.");
       setOptions([]);
+      setConfidence(undefined);
     } finally {
       setLoading(false);
     }
@@ -44,7 +47,7 @@ export default function App() {
 
       {error && <p className="error">{error}</p>}
 
-      <ShipmentResults options={options} />
+      <ShipmentResults options={options} confidence={confidence} />
     </main>
   );
 }

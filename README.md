@@ -39,6 +39,16 @@ npm ci --prefix apps/web && npm run lint --prefix apps/web && npm run typecheck 
 
 GitHub Actions همین مسیرها را برای API و وب اجرا می‌کند.
 
+## API امکانات عملیاتی
+
+- `POST /api/shipments/recommend` تصمیم explainable با `decisionId`، confidence، نسخهٔ مدل و breakdown امتیاز ایجاد می‌کند.
+- `GET /api/shipments/history` تاریخچهٔ تصمیم‌های tenant جاری را می‌خواند.
+- `POST /api/shipments/:decisionId/feedback` پذیرش/رد، هزینه و ETA واقعی را ثبت می‌کند.
+- `POST /api/imports/routes` حداکثر ۵۰۰ مسیر validate‌شده را برای کاندیدهای تصمیم وارد می‌کند.
+- `POST /api/copilot/recommend` درخواست ساختاریافتهٔ متنی را تحلیل می‌کند و فقط پیشنهاد می‌دهد؛ هر اقدام خارجی نیازمند تأیید انسان است.
+
+برای محیط production مقدار `CARGOIQ_API_KEYS` را تنظیم کنید و کلید را در header `x-api-key` بفرستید. در نبود این مقدار، API تنها برای توسعه با tenant محلی اجرا می‌شود. schema پایدار PostgreSQL در `apps/api/db/schema.sql` قرار دارد؛ repository فعلی in-memory است و برای deployment باید با adapter PostgreSQL جایگزین شود.
+
 ## معماری و امنیت
 
 جزئیات جریان داده در [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) و کنترل‌های امنیتی در

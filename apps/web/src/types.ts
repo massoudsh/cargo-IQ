@@ -12,11 +12,18 @@ export interface ShipmentOption {
   mode: "sea" | "air" | "land";
   estimatedCostUsd: number;
   estimatedDeliveryDays: number;
-  delayRiskScore: number; // 0..1
+  delayRiskScore: number;
   recommended: boolean;
+  score: number;
+  reasons: string[];
 }
 
 export interface RecommendResponse {
+  decisionId: string;
+  modelVersion: string;
+  confidence: number;
   request: ShipmentRequest;
   options: ShipmentOption[];
+  constraintsApplied: string[];
+  createdAt: string;
 }

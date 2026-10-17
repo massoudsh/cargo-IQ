@@ -134,7 +134,18 @@ body {
 .results h2 {
   color: #0b2545;
   font-size: 1.3rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.confidence,
+.reasons {
+  color: #475467;
+  font-size: 0.85rem;
+}
+
+.reasons {
+  line-height: 1.6;
+  margin: 1rem 0 0;
 }
 
 .results-grid {

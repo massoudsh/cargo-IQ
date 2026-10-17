@@ -18,6 +18,7 @@ describe("App", () => {
             cargoType: "electronics",
             priority: "balanced",
           },
+          confidence: 0.82,
           options: [
             {
               forwarder: "SilkRoute Logistics",
@@ -25,6 +26,8 @@ describe("App", () => {
               estimatedCostUsd: 3900,
               estimatedDeliveryDays: 26,
               delayRiskScore: 0.16,
+              score: 0.82,
+              reasons: ["تطبیق مسیر"],
               recommended: true,
             },
           ],

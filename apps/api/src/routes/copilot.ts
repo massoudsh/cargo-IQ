@@ -16,7 +16,7 @@ export function createCopilotRouter(store: DecisionStore) {
       res.status(422).json({ error: { code: "MISSING_CONSTRAINTS", message: "مبدأ، مقصد و نوع کالا را در پیام مشخص کنید." } });
       return;
     }
-    const options = recommendShipmentOptions(request);
+    const options = recommendShipmentOptions(request, req.tenantId);
     const recommendation = {
       decisionId: createDecisionId(), modelVersion: decisionModelVersion, confidence: calculateConfidence(options), request, options,
       constraintsApplied: ["copilot:deterministic-parser", `priority:${request.priority}`, "human-approval-required"], createdAt: new Date().toISOString(),

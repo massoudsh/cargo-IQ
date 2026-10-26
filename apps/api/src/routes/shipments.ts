@@ -13,7 +13,7 @@ export function createShipmentsRouter(store: DecisionStore) {
     }
 
     const request = req.body;
-    const options = recommendShipmentOptions(request);
+    const options = recommendShipmentOptions(request, req.tenantId);
     const recommendation = {
       decisionId: createDecisionId(),
       modelVersion: decisionModelVersion,
@@ -45,13 +45,17 @@ export function createShipmentsRouter(store: DecisionStore) {
   return router;
 }
 
-function isNonEmptyString(value: unknown): value is string { return typeof value === "string" && value.trim().length > 0; }
-function isOptionalNonNegativeNumber(value: unknown): value is number | undefined { return value === undefined || (typeof value === "number" && Number.isFinite(value) && value >= 0); }
+function isNonEmptyString(value: unknown): value is string { return typeof value === "string" && value.trim().length > 0 && value.length <= 300; }
+function isOptionalNonNegativeNumber(value: unknown): value is number | undefined { return value === undefined || (typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1e9); }
 function isShipmentRequest(value: unknown): value is ShipmentRequest {
   if (typeof value !== "object" || value === null) return false;
   const request = value as Record<string, unknown>;
-  return isNonEmptyString(request.origin) && isNonEmptyString(request.destination) && isNonEmptyString(request.cargoType) && isOptionalNonNegativeNumber(request.weightKg) && isOptionalNonNegativeNumber(request.volumeCbm) && (request.priority === "cost" || request.priority === "time" || request.priority === "balanced");
+  const dimensions = request.dimensionsCm;
+  const validDimensions = dimensions === undefined || (typeof dimensions === "object" && dimensions !== null && ["length", "width", "height"].every((key) => isPositiveNumber((dimensions as Record<string, unknown>)[key])));
+  const validIncoterm = request.incoterm === undefined || ["EXW", "FOB", "CFR", "CIF", "DAP", "DDP"].includes(request.incoterm as string);
+  return isNonEmptyString(request.origin) && isNonEmptyString(request.destination) && isNonEmptyString(request.cargoType) && isOptionalNonNegativeNumber(request.weightKg) && isOptionalNonNegativeNumber(request.volumeCbm) && (request.pieces === undefined || (typeof request.pieces === "number" && Number.isInteger(request.pieces) && request.pieces > 0 && request.pieces <= 10000)) && validDimensions && validIncoterm && (request.priority === "cost" || request.priority === "time" || request.priority === "balanced");
 }
+function isPositiveNumber(value: unknown): value is number { return typeof value === "number" && Number.isFinite(value) && value > 0 && value <= 10000; }
 function isFeedback(value: unknown): value is { accepted: boolean; reason?: string; actualCostUsd?: number; actualDeliveryDays?: number } {
   if (typeof value !== "object" || value === null) return false;
   const feedback = value as Record<string, unknown>;

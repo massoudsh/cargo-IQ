@@ -4,6 +4,9 @@ export interface ShipmentRequest {
   cargoType: string;
   weightKg?: number;
   volumeCbm?: number;
+  pieces?: number;
+  dimensionsCm?: { length: number; width: number; height: number };
+  incoterm?: "EXW" | "FOB" | "CFR" | "CIF" | "DAP" | "DDP";
   priority: "cost" | "time" | "balanced";
 }
 
@@ -30,6 +33,8 @@ export interface ExplainedShipmentOption extends ShipmentOption {
   score: number;
   scoreBreakdown: ScoreBreakdown;
   reasons: string[];
+  chargeableWeightKg?: number;
+  estimateReviewAt: string;
 }
 
 export interface Recommendation {
@@ -61,4 +66,34 @@ export interface ImportRouteInput {
   estimatedDeliveryDays: number;
   delayRiskScore: number;
   reliability: number;
+}
+
+export interface ComplianceCheck {
+  code: string;
+  title: string;
+  status: "required" | "recommended" | "review";
+  guidance: string;
+}
+
+export interface ComplianceResult {
+  checks: ComplianceCheck[];
+  disclaimer: string;
+}
+
+export interface RfqRequest {
+  rfqId: string;
+  decisionId: string;
+  forwarders: string[];
+  status: "draft" | "expired";
+  expiresAt: string;
+  createdAt: string;
+}
+
+export type MilestoneCode = "registered" | "picked-up" | "in-transit" | "customs" | "delivered";
+
+export interface TrackingRecord {
+  trackingCode: string;
+  decisionId: string;
+  source: "manual";
+  events: { code: MilestoneCode; occurredAt: string }[];
 }

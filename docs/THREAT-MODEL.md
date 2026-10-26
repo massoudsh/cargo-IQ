@@ -18,9 +18,18 @@
 | Unsafe agent action | Typed tools, policy gate, audit trail, and human approval |
 | Dependency compromise | Dependabot, lockfiles, CodeQL, SBOM, and review-required updates |
 
+## Operational feature boundaries
+
+- RFQs, tracking records, history and imported rates must not cross tenants. Tests exercise reads and writes under a different key.
+- Tracking is manually asserted, not carrier-verified. Stage order prevents regressions and duplicate completion, but does not establish that goods moved.
+- A local RFQ is not a sent request, booking or received offer. The UI explicitly discloses this distinction.
+- Rate review dates are internal reminders, not promises from a carrier. Expired recommendations cannot create RFQ drafts.
+- Packaging input is bounded and validated, including positive complete dimensions and integer package counts.
+- Customs keyword checks are conservative prompts for a broker review, not a dangerous-goods classifier or legal clearance.
+
 ## Current gaps
 
-Authentication, tenant isolation, durable storage, rate limiting, and provider integrations are not implemented yet. The current API should be treated as an internal MVP, not an unrestricted public endpoint.
+Optional API-key authentication, per-tenant access controls and application rate limiting are implemented, but production still needs stable tenant identity mapping, user-level authorization, durable storage and provider integrations. Without configured API keys, the development tenant is shared. Treat the current API as an internal MVP, not an unrestricted public endpoint.
 
 ## Security acceptance criteria
 

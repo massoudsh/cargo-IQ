@@ -10,7 +10,7 @@ importsRouter.post("/routes", (req, res) => {
     res.status(400).json({ error: { code: "INVALID_IMPORT", message: "دادهٔ مسیرها نامعتبر است." } });
     return;
   }
-  importRouteOptions(routes);
+  importRouteOptions(routes, req.tenantId);
   res.status(201).json({ imported: routes.length });
 });
 

@@ -9,7 +9,7 @@ describe("shipment decision API", () => {
     const response = await request(app).post("/api/shipments/recommend").send({ origin: "China", destination: "Iran", cargoType: "electronics", priority: "balanced", weightKg: 120 });
     expect(response.status).toBe(201);
     expect(response.body.decisionId).toMatch(/^dec_/);
-    expect(response.body.modelVersion).toBe("rules-v1");
+    expect(response.body.modelVersion).toBe("rules-v2");
     expect(response.body.options).toHaveLength(3);
     expect(response.body.options[0].scoreBreakdown).toBeDefined();
 

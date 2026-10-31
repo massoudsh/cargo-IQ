@@ -3,6 +3,8 @@ import { requestJson } from "./api";
 import ShipmentForm from "./components/ShipmentForm";
 import ShipmentResults from "./components/ShipmentResults";
 import TradeTools from "./components/TradeTools";
+import AppShell from "./components/AppShell";
+import DecisionWorkspace from "./components/DecisionWorkspace";
 import type { RecommendResponse, RfqRequest, ShipmentRequest } from "./types";
 
 export default function App() {
@@ -22,8 +24,8 @@ export default function App() {
     try {
       setDecision(await requestJson<RecommendResponse>("/api/shipments/recommend", request));
       setHistoryLoaded(false);
-    } catch {
-      setError("دریافت پیشنهاد با خطا مواجه شد. دوباره تلاش کنید.");
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "دریافت پیشنهاد با خطا مواجه شد. دوباره تلاش کنید.");
     } finally { setLoading(false); }
   }
 
@@ -40,6 +42,8 @@ export default function App() {
 
   async function loadHistory() {
     setActionPending(true);
+    setHistoryLoaded(false);
+    setHistory([]);
     setError(null);
     try {
       const data = await requestJson<{ decisions: RecommendResponse[] }>("/api/shipments/history");
@@ -51,29 +55,24 @@ export default function App() {
   }
 
   return (
-    <main className="page">
-      <header className="hero">
-        <img className="logo" src="/cargoiq-logo.svg" alt="" width="88" height="88" />
-        <h1>CargoIQ</h1>
-        <p className="tagline">هر محموله، بهترین تصمیم.</p>
-      </header>
-      <p className="description">مقایسهٔ هزینه، زمان و ریسک حمل بین‌المللی — نسخهٔ آزمایشی با دادهٔ نمونه، بدون رزرو یا ارسال خودکار.</p>
-      <ShipmentForm loading={loading || actionPending} onSubmit={handleSubmit} />
+    <AppShell>
       {error && <p className="error" role="alert">{error}</p>}
-      {loading && <p role="status">در حال مقایسهٔ گزینه‌ها…</p>}
-      <section className="history" aria-label="تاریخچهٔ تصمیم‌ها">
-        <button type="button" className="secondary-btn" disabled={loading || actionPending} onClick={() => void loadHistory()}>تازه‌سازی تاریخچهٔ این سازمان</button>
-        {historyLoaded && (history.length ? <ul>{history.map((item) => <li key={item.decisionId}>
-          <button type="button" className="secondary-btn" disabled={loading || actionPending} onClick={() => { setDecision(item); setRfq(null); setError(null); }}>
-            {item.request.origin} ← {item.request.destination} · {new Date(item.createdAt).toLocaleDateString("fa-IR")}
-          </button>
-        </li>)}</ul> : <p role="status">هنوز تصمیمی ثبت نشده است.</p>)}
+      <DecisionWorkspace decisions={history} loaded={historyLoaded} busy={loading || actionPending} onReload={() => void loadHistory()} onSelect={(item) => {
+        setDecision(item); setRfq(null); setError(null);
+        window.setTimeout(() => { document.getElementById("selected-decision")?.focus(); }, 0);
+      }} />
+      <section id="plan" tabIndex={-1} aria-label="برنامه‌ریزی حمل">
+        <ShipmentForm loading={loading || actionPending} onSubmit={handleSubmit} />
       </section>
-      {decision && <>
+      {loading && <p className="skeleton" role="status">در حال مقایسهٔ گزینه‌ها…</p>}
+      {decision && <section id="selected-decision" tabIndex={-1} aria-label="تصمیم انتخاب‌شده">
+        <p className="hint">شناسهٔ تصمیم: <bdi>{decision.decisionId}</bdi> · <bdi>{decision.request.origin}</bdi> ← <bdi>{decision.request.destination}</bdi></p>
         <ShipmentResults options={decision.options} confidence={decision.confidence} onRequestQuotes={() => void requestQuotes()} requestPending={actionPending} rfqCreated={rfq !== null} />
         {rfq && <p role="status" className="success">پیش‌نویس محلی استعلام ثبت شد: <bdi>{rfq.rfqId}</bdi> · پایان مهلت پیگیری: {new Date(rfq.expiresAt).toLocaleString("fa-IR")} — به هیچ فورواردر ارسال نشده است.</p>}
-      </>}
-      <TradeTools key={decision?.decisionId ?? "no-decision"} decision={decision} />
-    </main>
+      </section>}
+      <section id="operations" tabIndex={-1} aria-label="پیگیری و مدارک">
+        <TradeTools key={decision?.decisionId ?? "no-decision"} decision={decision} />
+      </section>
+    </AppShell>
   );
 }

@@ -53,7 +53,10 @@ export default function TradeTools({ decision }: { decision: RecommendResponse |
         </form>
         <button type="button" className="secondary-btn" disabled={!decision || pending} onClick={() => void updateTracking("/api/tracking", { decisionId: decision?.decisionId })}>شروع پیگیری دستی این تصمیم</button>
         {tracking && <>
-          <p>کد: <bdi>{tracking.trackingCode}</bdi></p>
+          <p>کد: <bdi>{tracking.trackingCode}</bdi> · تصمیم: <bdi>{tracking.decisionId}</bdi></p>
+          {decision?.decisionId === tracking.decisionId && <p><bdi>{decision.request.origin}</bdi> ← <bdi>{decision.request.destination}</bdi> · {decision.request.cargoType}</p>}
+          <p className="status-badge" role="status">{tracking.events.length.toLocaleString("fa-IR")} از {stages.length.toLocaleString("fa-IR")} مرحله ثبت شده · {stageLabels[stages[currentIndex]]}</p>
+          <p className="hint">زمان‌ها، زمان ثبت دستی رویداد هستند؛ زمان برنامه‌ریزی‌شده، مسئول مشخص یا مدرک تأیید حامل در دسترس نیست.</p>
           <ol className="timeline">{stages.map((stage, index) => {
             const event = tracking.events.find((item) => item.code === stage);
             return <li key={stage} aria-current={index === currentIndex ? "step" : undefined} className={index <= currentIndex ? "completed" : "upcoming"}>

@@ -75,7 +75,39 @@ RFQ، رهگیری و catalog واردشده در حافظه‌اند؛ RFQ و �
 - `uploads/Obsidian-RECIPE.md` و `uploads/TASKS.md` منابع غیرمحصولی‌اند و به اپ ارجاع ندارند؛ حذف نشدند تا اسناد کاربر از دست نروند.
 - دو پاس filter/concat بدون اثر در ranking و sort تکراری UI حذف شدند؛ کاندیدهای import در سطح tenant جدا شدند و overwrite چند مسیر یک فورواردر اصلاح شد.
 - فرم با disclosure جزئیات، labelهای قابل‌دسترسی، ورود اعشار، focus قابل‌دیدن و grid مناسب عرض کم بهبود یافت. نتیجه پیش از ابزارهای جانبی نمایش داده می‌شود؛ loading، empty، error و محدودیت دادهٔ نمونه روشن‌اند.
-- اعتبارسنجی کامل: `npm run lint`, `npm run typecheck`, `npm test` در هر اپ. در این نوبت به‌دلیل عدم دسترسی registry، suiteها اجرا نشدند و تست‌های افزوده‌شده باید در CI اجرا شوند. ۱۲ smoke check منطق خالص و ۳۹ assertion مستقل برای handlerها/CSS موفق شدند؛ این harness جایگزین integration با Express یا typecheck نیست. مرورگر در این محیط اجرا نمی‌شود و بررسی بصری ادعا نشده است.
+- در اجرای اولیهٔ قابلیت‌های حمل دسترسی npm مسدود بود؛ در ۲۰۲۶-۱۰-۳۱ وابستگی‌های lockfile نصب و lint، typecheck و تست‌های هر دو اپ اجرا و موفق شدند. آزمون مرورگر یا بررسی بصری در این محیط انجام نشده است.
+
+## کنسول UI/UX و وضعیت backlog
+
+بازطراحی بر اساس `uploads/cargo-iq-ai-agent-backlog.md` با حفظ API، محاسبات و مرز tenant انجام شد. محصول فعلی **تصمیم‌یار با دادهٔ نمونه** است، نه سامانهٔ زندهٔ ناوگان؛ شاخص‌های ساختگی، مشتری، پروفایل یا مجوزهای فرضی اضافه نشده‌اند.
+
+| بخش backlog | نتیجه در دامنهٔ واقعی محصول |
+|---|---|
+| ۱ و ۳ — design system و glass | `theme.css` منبع tokenها؛ `GlassSurface` با سه سطح؛ recipe مشترک فرم، دکمه، جدول، badge و timeline. اجزای بلااستفاده مثل modal و date-picker سفارشی ساخته نشدند؛ date input بومی است. |
+| ۲ — shell | نوار بالای sticky، sidebar دسکتاپ و disclosure موبایل با Escape، skip link، لینک فعال، نشان واضح محیط نمونه؛ بدون اعلان یا پروفایل ساختگی. جست‌وجو در تاریخچهٔ قابل‌دسترسی است، نه جست‌وجوی جهانی منابع ناموجود. |
+| ۴ — dashboard | شمار تصمیم‌ها، برآوردهای تازه و نیازمند بازبینی؛ کارت‌ها به صف فیلترشده می‌روند. پیش از بارگیری مقدار نامعلوم نمایش داده می‌شود. آمار محمولهٔ فعال/تحویل/تأخیر بدون endpoint واقعی اضافه نشده است. |
+| ۵ — visibility | شناسهٔ تصمیم و رکورد، زمینهٔ مسیر فقط در صورت انطباق تصمیم، تعداد مراحل، timestamps ثبت دستی و اقدام بعدی؛ بدون ETA یا مسئول فرضی. |
+| ۶ — exception management | صف بازبینی برآورد موجود است اما تأخیر حمل یا exception نیست. assignment، escalation، resolution و audit جدید **پیاده نشده‌اند**؛ مدل داده، مجوز و API آن‌ها وجود ندارد. |
+| ۷ — investigation | جست‌وجوی شناسه، مسیر، کالا و فورواردر؛ فیلتر روز UTC و تازگی؛ مرتب‌سازی تاریخ؛ صفحه‌بندی ۱۰ ردیفی؛ header چسبان و پیمایش جدول روی موبایل. bulk action و saved queue به‌دلیل نبود قرارداد backend اضافه نشد. |
+| ۸ — partners | تعداد دفعات پیشنهاد برتر در تصمیم‌های فیلترشده و drill-down با نام؛ این آمار عملکرد واقعی، on-time rate یا کیفیت سرویس نیست. |
+| ۹ — reporting | پیش‌نمایش فیلترشده و CSV همان داده‌های دریافت‌شدهٔ tenant، شامل همهٔ صفحات، scope، زمان تولید و فیلترها؛ خنثی‌سازی formula injection، وضعیت شکست و retry. Excel/PDF و analytics جدید اضافه نشده‌اند. |
+| ۱۰ — forms/errors | خطای inline و summary پیونددار، تمرکز روی فیلد حتی داخل details بسته، حفظ ورودی، پیام‌های مشخص شبکه/مجوز/نرخ/سرور با catalog فارسی و انگلیسی. تنظیمات پرخطر ناموجود ساخته نشدند. |
+| ۱۱ — RTL | CSS logical properties، bdi برای شناسه‌ها، عدد/تاریخ فارسی و fallback فونت محلی؛ semantics در RTL/LTR تست شد. ترجمهٔ کامل UI انگلیسی و بررسی بصری ادعا نمی‌شود. |
+| ۱۲ و ۱۳ — theme/motion | light/dark با پیش‌فرض سیستم و ذخیرهٔ preference؛ motion کوتاه، fallback بدون blur و reduced motion/transparency؛ blur فقط روی topbar، نه کارت‌های تو‌در‌تو. |
+| ۱۴ — accessibility | landmarks، focus، متن وضعیت کنار رنگ، labelها و contrast test tokenهای هر theme؛ تأیید کامل WCAG، screen-reader واقعی و تست بصری هنوز انجام نشده است. |
+| ۱۵ — performance | سقف ۱۰ ردیف DOM، memoized filtering، بدون dependency جدید یا کتابخانهٔ نمودار/نقشه؛ کل history همچنان از API دریافت می‌شود. Core Web Vitals و benchmark مرورگر اندازه‌گیری نشده‌اند؛ pagination سمت سرور برای مقیاس بزرگ لازم است. |
+| ۱۶ — quality | دستور واحد `npm run check --prefix apps/web`؛ تست component، CSV، contrast، theme و خطاها در CI موجود اجرا می‌شوند. visual regression مرورگری در این محیط قابل اجرا نیست. |
+
+### بررسی کیفیت کنسول
+
+```bash
+npm ci --prefix apps/web
+npm run check --prefix apps/web
+npm ci --prefix apps/api
+npm run lint --prefix apps/api && npm run typecheck --prefix apps/api && npm test --prefix apps/api
+```
+
+در ۲۰۲۶-۱۰-۳۱، ۴۰ تست وب و ۱۸ تست API موفق شدند. تست‌های رنگ روی جفت‌های token هستند، نه گواهی دسترس‌پذیری UI رندرشده. آزمون‌های بصری، screen-reader، مرورگر، screenshots و Core Web Vitals انجام نشده‌اند. در محیط مناسب، dark/light، RTL/LTR، عرض ۳۲۰px، zoom ۲۰۰٪، keyboard-only، فیلتر/CSV و خطای مجوز را بررسی کنید؛ معیارهای خارج از دامنهٔ محصول نباید completed گزارش شوند.
 
 ## License
 

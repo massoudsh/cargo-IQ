@@ -55,15 +55,15 @@ describe("shipment comparison", () => {
     submitShipment();
     await screen.findByText("Atlas Test Cargo");
     fireEvent.click(screen.getByRole("button", { name: "ساخت پیش‌نویس استعلام چندفورواردر" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("offline");
+    expect(await screen.findByRole("alert")).toHaveTextContent("ارتباط با سرویس برقرار نشد");
     expect(screen.getByRole("button", { name: "ساخت پیش‌نویس استعلام چندفورواردر" })).toBeEnabled();
   });
 
-  it("shows the existing recommendation error message", async () => {
+  it("shows an actionable service error message", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(json({}, 500));
     render(<App />);
     submitShipment();
-    expect(await screen.findByRole("alert")).toHaveTextContent("دریافت پیشنهاد با خطا مواجه شد. دوباره تلاش کنید.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("سرویس موقتاً پاسخ‌گو نیست");
   });
 
   it("includes dimensions, fractional volume and Incoterms in the same request", async () => {
@@ -86,6 +86,18 @@ describe("shipment comparison", () => {
 });
 
 describe("history and operational tools", () => {
+  it("removes stale report data when history access is denied", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(json({ decisions: [decision()] }))
+      .mockResolvedValueOnce(json({ error: { message: "internal detail" } }, 403));
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "تازه‌سازی تاریخچهٔ این سازمان" }));
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "تازه‌سازی تاریخچهٔ این سازمان" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("دسترسی به این اطلاعات مجاز نیست");
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "دریافت گزارش CSV همین نتایج" })).not.toBeInTheDocument();
+  });
   it("restores stale decisions from history and prevents a stale RFQ", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(json({ decisions: [decision("2020-01-01T00:00:00Z")] }));
     render(<App />);

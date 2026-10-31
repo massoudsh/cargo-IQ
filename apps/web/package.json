@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "build": "tsc -b && vite build",
     "test": "vitest run",
+    "check": "npm run lint && npm run typecheck && npm test",
     "preview": "vite preview"
   },
   "dependencies": {

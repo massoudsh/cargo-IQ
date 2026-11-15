@@ -1,0 +1,19 @@
+# Keep the build context small and free of secrets/local state.
+**/node_modules
+**/dist
+**/build
+**/*.log
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.github
+.noqte
+.vibe
+.whisper-cache
+wiki
+uploads
+docs
+README.md
+LICENSE

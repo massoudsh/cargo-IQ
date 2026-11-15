@@ -113,6 +113,17 @@ npm run lint --prefix apps/api && npm run typecheck --prefix apps/api && npm tes
 
 [MIT](LICENSE).
 
+## اجرا با Docker
+
+```bash
+cp .env.example .env        # پیش از اشتراک‌گذاری، CARGOIQ_API_KEYS را تنظیم کنید
+docker compose up --build -d
+```
+
+سپس <http://localhost:8080> را باز کنید. اپ وب با nginx سرو می‌شود و `/api` را به سرویس API پروکسی می‌کند؛ پورت API به میزبان publish نمی‌شود و نیازی به تنظیم CORS یا `VITE_API_BASE_URL` نیست.
+
+دو محدودیت مهم: داده‌ها در حافظهٔ پروسهٔ API هستند و با restart از بین می‌روند، و به همین دلیل باید **فقط یک replica** از API اجرا شود. TLS نیز در این stack پایان نمی‌یابد. دستور کامل، متغیرها و روش بررسی در [`docs/DOCKER.md`](docs/DOCKER.md) آمده است.
+
 ## معماری و امنیت
 
 جزئیات جریان داده در [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) و کنترل‌های امنیتی در

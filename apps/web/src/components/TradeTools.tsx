@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { requestJson } from "../api";
-import type { ComplianceResult, MilestoneCode, RecommendResponse, TrackingRecord } from "../types";
+import type { MilestoneCode, ReadinessResult, RecommendResponse, TrackingRecord } from "../types";
 
 const stageLabels: Record<MilestoneCode, string> = {
   registered: "ثبت پیگیری داخلی", "picked-up": "دریافت کالا", "in-transit": "در مسیر", customs: "تشریفات مقصد", delivered: "تحویل نهایی",
@@ -10,9 +10,18 @@ const stages = Object.keys(stageLabels) as MilestoneCode[];
 export default function TradeTools({ decision }: { decision: RecommendResponse | null }) {
   const [trackingCode, setTrackingCode] = useState("");
   const [tracking, setTracking] = useState<TrackingRecord | null>(null);
-  const [compliance, setCompliance] = useState<ComplianceResult | null>(null);
+  const [readiness, setReadiness] = useState<ReadinessResult | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!decision) { setReadiness(null); return; }
+    let cancelled = false;
+    requestJson<ReadinessResult>(`/api/compliance/readiness/${decision.decisionId}`)
+      .then((data) => { if (!cancelled) setReadiness(data); })
+      .catch((failure) => { if (!cancelled) setError(failure instanceof Error ? failure.message : "دریافت وضعیت مدارک ناموفق بود."); });
+    return () => { cancelled = true; };
+  }, [decision]);
 
   async function updateTracking(path: string, body?: unknown) {
     setPending(true);
@@ -27,15 +36,13 @@ export default function TradeTools({ decision }: { decision: RecommendResponse |
     } finally { setPending(false); }
   }
 
-  async function checkCompliance() {
+  async function toggleReadiness(code: string, prepared: boolean) {
     if (!decision) return;
-    setPending(true);
-    setError(null);
-    setCompliance(null);
+    setPending(true); setError(null);
     try {
-      setCompliance(await requestJson<ComplianceResult>("/api/compliance/check", decision.request));
+      setReadiness(await requestJson<ReadinessResult>(`/api/compliance/readiness/${decision.decisionId}`, { code, prepared }));
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "بررسی مدارک ناموفق بود.");
+      setError(failure instanceof Error ? failure.message : "ثبت وضعیت مدرک ناموفق بود.");
     } finally { setPending(false); }
   }
 
@@ -67,15 +74,18 @@ export default function TradeTools({ decision }: { decision: RecommendResponse |
         </>}
       </div>
       <div className="tool-card">
-        <h3>چک‌لیست آمادگی گمرکی</h3>
-        <p className="hint">بر اساس مبدأ، مقصد و نوع کالای تصمیم انتخاب‌شده؛ نه تأیید مجوز یا ترخیص.</p>
-        <button type="button" className="secondary-btn" disabled={!decision || pending} onClick={() => void checkCompliance()}>بررسی مدارک این محموله</button>
+        <h3>آمادگی مدارک گمرکی</h3>
         {!decision && <p className="hint">ابتدا پیشنهاد حمل بگیرید یا یک تصمیم را از تاریخچه انتخاب کنید.</p>}
-        {compliance && <>
-          <ul className="checklist">{compliance.checks.map((check) => <li className={check.status} key={check.code}>
-            <strong>{check.title} — {check.status === "required" ? "لازم برای بررسی" : check.status === "review" ? "نیازمند بررسی" : "توصیه‌شده"}</strong><span>{check.guidance}</span>
-          </li>)}</ul>
-          <p className="hint">{compliance.disclaimer}</p>
+        {decision && readiness && <>
+          <p className="hint">برای تصمیم <bdi>{decision.decisionId}</bdi> · {readiness.outstandingRequired.toLocaleString("fa-IR")} مورد الزامی هنوز آماده نیست.</p>
+          <fieldset className="checklist readiness">
+            <legend className="sr-only">وضعیت مدارک</legend>
+            {readiness.checks.map((check) => <label key={check.code} className={`readiness-row ${check.status}`}>
+              <input type="checkbox" checked={check.prepared} disabled={pending} onChange={(event) => void toggleReadiness(check.code, event.target.checked)} />
+              <span><strong>{check.title}</strong> — {check.status === "required" ? "لازم" : check.status === "review" ? "نیازمند بررسی کارگزار" : "توصیه‌شده"}<span className="hint">{check.guidance}{check.preparedAt ? ` · ثبت‌شده در ${new Date(check.preparedAt).toLocaleString("fa-IR")}` : ""}</span></span>
+            </label>)}
+          </fieldset>
+          <p className="hint">{readiness.disclaimer}</p>
         </>}
       </div>
     </div>

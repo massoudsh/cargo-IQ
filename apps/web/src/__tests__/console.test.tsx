@@ -4,6 +4,10 @@ import AppShell from "../components/AppShell";
 import GlassSurface from "../components/GlassSurface";
 import DecisionWorkspace from "../components/DecisionWorkspace";
 import ShipmentForm from "../components/ShipmentForm";
+import LandedCostPanel from "../components/LandedCostPanel";
+import OffersPanel from "../components/OffersPanel";
+import TradeTools from "../components/TradeTools";
+import ShipmentResults from "../components/ShipmentResults";
 import { csvCell, decisionCsv, filterDecisions, type DecisionFilters } from "../decisionReport";
 import { ApiError, requestJson } from "../api";
 import type { RecommendResponse } from "../types";
@@ -14,6 +18,7 @@ function decision(index: number): RecommendResponse {
     decisionId: `dec_${index}`, modelVersion: "rules-v2", confidence: 0.5,
     request: { origin: index % 2 ? "China" : "Turkey", destination: "Iran", cargoType: "parts", priority: "balanced" },
     constraintsApplied: [], createdAt: `2026-01-${String(index + 1).padStart(2, "0")}T00:00:00Z`,
+    measures: { volumeCbm: 0, actualWeightKg: 0, air: { volumetricKg: 0, chargeableKg: 0, basis: "actual" }, seaLcl: { revenueTon: 0, basis: "volume" }, road: { volumetricKg: 0, chargeableKg: 0, loadingMetres: 0, basis: "actual" } },
     options: [{ forwarder: "Test Forwarder", mode: "air", estimatedCostUsd: 100, estimatedDeliveryDays: 5, delayRiskScore: 0.1, recommended: true, score: 1, reasons: [], estimateReviewAt: index % 2 ? "2099-01-01T00:00:00Z" : "2020-01-01T00:00:00Z", scoreBreakdown: { cost: 0, time: 0, risk: 0, reliability: 0, routeMatch: 0, cargoMatch: 0, total: 0 } }],
   };
 }
@@ -150,5 +155,74 @@ describe("actionable API errors", () => {
     document.documentElement.lang = "en";
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("offline"));
     await expect(requestJson("/test")).rejects.toThrow("Check your connection");
+  });
+});
+
+describe("rival-inspired pricing and document panels", () => {
+  const base = decision(1);
+  it("shows the landed-cost total and marks freight excluded when the Incoterm already includes it", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(JSON.stringify({
+      decisionId: "dec_1", incoterm: "CIF", customsValueUsd: 1000,
+      lines: [
+        { code: "goods", label: "ارزش کالا", amountUsd: 1000, counted: true, note: "بر پایهٔ CIF" },
+        { code: "freight", label: "کرایهٔ بین‌المللی", amountUsd: 200, counted: false, note: "در قیمت کالا لحاظ شده" },
+      ],
+      totalUsd: 1000, totalIrr: 50000000, assumptions: [], disclaimer: "برآورد برنامه‌ریزی است",
+    }), { headers: { "Content-Type": "application/json" } }));
+    render(<LandedCostPanel decision={base} fxRate={50000} onFxRate={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("ارزش کالا در فاکتور (دلار)"), { target: { value: "1000" } });
+    fireEvent.click(screen.getByRole("button", { name: "محاسبهٔ هزینهٔ نهایی" }));
+    expect(await screen.findByText(/برآورد برنامه‌ریزی است/)).toBeInTheDocument();
+    const freightRow = screen.getByText("کرایهٔ بین‌المللی").closest("tr");
+    expect(freightRow).toHaveClass("excluded");
+    expect(screen.getByText(/۵۰٬۰۰۰٬۰۰۰/)).toBeInTheDocument();
+  });
+
+  it("records a forwarder offer and shows the best-value marker", async () => {
+    const rfq = { rfqId: "rfq_1", decisionId: "dec_1", forwarders: ["Alpha", "Beta"], status: "draft" as const, expiresAt: "2099-01-01T00:00:00Z", createdAt: "2026-01-01T00:00:00Z" };
+    const comparison = {
+      rfqId: "rfq_1", estimateUsd: 3900,
+      offers: [
+        { rfqId: "rfq_1", forwarder: "Alpha", costUsd: 4000, transitDays: 20, recordedAt: "2026-01-01T00:00:00Z" },
+        { rfqId: "rfq_1", forwarder: "Beta", costUsd: 5000, transitDays: 10, recordedAt: "2026-01-01T00:00:00Z" },
+      ],
+      cheapest: "Alpha", fastest: "Beta", bestValue: "Alpha", methodology: "وزن مساوی هزینه و زمان", disclaimer: "دستی ثبت شده",
+    };
+    const fetch = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(comparison), { headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 201, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(comparison), { headers: { "Content-Type": "application/json" } }));
+    render(<OffersPanel rfq={rfq} />);
+    await screen.findByText("Alpha");
+    fireEvent.change(screen.getByLabelText("هزینه (دلار)"), { target: { value: "4200" } });
+    fireEvent.change(screen.getByLabelText("زمان تحویل (روز)"), { target: { value: "18" } });
+    fireEvent.click(screen.getByRole("button", { name: "ثبت پیشنهاد" }));
+    await screen.findByText("بهترین تعادل");
+    expect(fetch).toHaveBeenCalledWith("/api/quotes/rfq_1/offers", expect.objectContaining({ body: JSON.stringify({ forwarder: "Alpha", costUsd: 4200, transitDays: 18 }) }));
+  });
+
+  it("toggles a document as prepared and updates the outstanding count", async () => {
+    const readiness = {
+      decisionId: "dec_1",
+      checks: [{ code: "packing-list", title: "فهرست بسته‌بندی", status: "required", guidance: "آماده کنید", prepared: false }],
+      outstandingRequired: 1, disclaimer: "علامت دستی است",
+    };
+    const fetch = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(readiness), { headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ...readiness, checks: [{ ...readiness.checks[0], prepared: true }], outstandingRequired: 0 }), { headers: { "Content-Type": "application/json" } }));
+    render(<TradeTools decision={decision(1)} />);
+    const box = await screen.findByRole("checkbox", { name: /فهرست بسته‌بندی/ });
+    fireEvent.click(box);
+    expect(await screen.findByText(/۰ مورد الزامی/)).toBeInTheDocument();
+    expect(fetch).toHaveBeenLastCalledWith("/api/compliance/readiness/dec_1", expect.objectContaining({ body: JSON.stringify({ code: "packing-list", prepared: true }) }));
+  });
+
+  it("shows a rial equivalent only when an FX rate is supplied", () => {
+    cleanup();
+    render(<ShipmentResults options={base.options} onRequestQuotes={vi.fn()} requestPending={false} rfqCreated={false} fxRate={2} />);
+    expect(screen.getByText(/ریال/)).toBeInTheDocument();
+    cleanup();
+    render(<ShipmentResults options={base.options} onRequestQuotes={vi.fn()} requestPending={false} rfqCreated={false} />);
+    expect(screen.queryByText(/ریال/)).not.toBeInTheDocument();
   });
 });

@@ -6,4 +6,9 @@ export type {
   RfqRequest,
   TrackingRecord,
   MilestoneCode,
+  BillingBasis,
+  FreightMeasures,
+  LandedCostResult,
+  OfferComparison,
+  ReadinessResult,
 } from "../../api/src/types";

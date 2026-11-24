@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { calculateConfidence, decisionModelVersion, recommendShipmentOptions } from "../decisionEngine.js";
+import { calculateFreightMeasures } from "../freightMeasures.js";
 import { createDecisionId, type DecisionStore } from "../decisionStore.js";
 import type { ShipmentRequest } from "../types.js";
 
@@ -18,7 +19,7 @@ export function createCopilotRouter(store: DecisionStore) {
     }
     const options = recommendShipmentOptions(request, req.tenantId);
     const recommendation = {
-      decisionId: createDecisionId(), modelVersion: decisionModelVersion, confidence: calculateConfidence(options), request, options,
+      decisionId: createDecisionId(), modelVersion: decisionModelVersion, confidence: calculateConfidence(options), request, options, measures: calculateFreightMeasures(request),
       constraintsApplied: ["copilot:deterministic-parser", `priority:${request.priority}`, "human-approval-required"], createdAt: new Date().toISOString(),
     };
     store.saveRecommendation(req.tenantId, recommendation);

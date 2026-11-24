@@ -1,4 +1,5 @@
-import type { ExplainedShipmentOption, ImportRouteInput, ShipmentOption, ShipmentRequest } from "./types.js";
+import { calculateFreightMeasures } from "./freightMeasures.js";
+import type { BillingBasis, ExplainedShipmentOption, ImportRouteInput, ShipmentOption, ShipmentRequest } from "./types.js";
 
 interface HistoricalRouteOption extends ShipmentOption {
   baseOrigin: string;
@@ -30,15 +31,6 @@ function cargoMatches(option: HistoricalRouteOption, request: ShipmentRequest) {
 }
 function scaled(value: number, min: number, max: number) { return max === min ? 0 : (value - min) / (max - min); }
 
-export function calculateChargeableWeightKg(request: ShipmentRequest) {
-  const volumetricWeight = request.dimensionsCm
-    ? (request.dimensionsCm.length * request.dimensionsCm.width * request.dimensionsCm.height * (request.pieces ?? 1)) / 6000
-    : request.volumeCbm
-      ? (request.volumeCbm * 1_000_000) / 6000
-      : 0;
-  return Math.max(request.weightKg ?? 0, volumetricWeight);
-}
-
 export function importRouteOptions(routes: ImportRouteInput[], tenantId: string) {
   const catalog = importedOptions.get(tenantId) ?? [];
   for (const route of routes) {
@@ -56,7 +48,15 @@ export function recommendShipmentOptions(request: ShipmentRequest, tenantId = "d
   const costs = uniqueCandidates.map((option) => option.estimatedCostUsd);
   const days = uniqueCandidates.map((option) => option.estimatedDeliveryDays);
   const weights = priorityWeights[request.priority];
-  const chargeableWeightKg = calculateChargeableWeightKg(request);
+  const measures = calculateFreightMeasures(request);
+  const chargeableWeightKg = measures.air.chargeableKg;
+  const billingFor = (mode: ShipmentOption["mode"]): BillingBasis | undefined => {
+    if (mode === "air" && chargeableWeightKg > 0) return { unit: "kg", value: chargeableWeightKg, basis: measures.air.basis === "volumetric" ? "volumetric-weight" : "actual-weight" };
+    if (mode === "sea" && measures.seaLcl.revenueTon > 0) return { unit: "revenue-ton", value: measures.seaLcl.revenueTon, basis: "weight-or-measure" };
+    if (mode === "land" && measures.road.loadingMetres > 0) return { unit: "ldm", value: measures.road.loadingMetres, basis: "loading-metre" };
+    if (mode === "land" && measures.road.chargeableKg > 0) return { unit: "kg", value: measures.road.chargeableKg, basis: measures.road.basis === "volumetric" ? "volumetric-weight" : "actual-weight" };
+    return undefined;
+  };
   const estimateReviewAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   return uniqueCandidates.map((option) => {
@@ -68,7 +68,7 @@ export function recommendShipmentOptions(request: ShipmentRequest, tenantId = "d
     const reliability = option.reliability * 0.1;
     const total = cost + time + risk + reliability + routeMatch + cargoMatch;
     const reasons = [routeMatch ? "تطبیق مسیر" : "گزینهٔ نمونه؛ مسیر نیازمند بررسی است", cargoMatch ? "تطبیق نوع کالا" : "", `ریسک تأخیر نمونه ${Math.round(option.delayRiskScore * 100)}٪`].filter(Boolean);
-    return { ...option, recommended: false, chargeableWeightKg: option.mode === "air" && chargeableWeightKg > 0 ? chargeableWeightKg : undefined, estimateReviewAt, score: Math.round(total * 1000) / 1000, scoreBreakdown: { cost, time, risk, reliability, routeMatch, cargoMatch, total }, reasons };
+    return { ...option, recommended: false, chargeableWeightKg: option.mode === "air" && chargeableWeightKg > 0 ? chargeableWeightKg : undefined, billing: billingFor(option.mode), estimateReviewAt, score: Math.round(total * 1000) / 1000, scoreBreakdown: { cost, time, risk, reliability, routeMatch, cargoMatch, total }, reasons };
   }).sort((a, b) => b.score - a.score).slice(0, 3).map((option, index) => ({ ...option, recommended: index === 0 }));
 }
 

@@ -8,6 +8,7 @@ function decision(reviewAt = new Date(Date.now() + 7 * 86400000).toISOString()):
     decisionId: "dec_test", modelVersion: "rules-v2", confidence: 0.82,
     request: { origin: "China", destination: "Iran", cargoType: "electronics", priority: "balanced" },
     constraintsApplied: ["priority:balanced"], createdAt: new Date().toISOString(),
+    measures: { volumeCbm: 0.144, actualWeightKg: 10, air: { volumetricKg: 24, chargeableKg: 24, basis: "volumetric" }, seaLcl: { revenueTon: 0.144, basis: "volume" }, road: { volumetricKg: 48, chargeableKg: 48, loadingMetres: 1, basis: "volumetric" } },
     options: [{
       forwarder: "Atlas Test Cargo", mode: "air", estimatedCostUsd: 3900, estimatedDeliveryDays: 6,
       delayRiskScore: 0.16, chargeableWeightKg: 24, estimateReviewAt: reviewAt, score: 0.82,
@@ -16,6 +17,12 @@ function decision(reviewAt = new Date(Date.now() + 7 * 86400000).toISOString()):
     }],
   };
 }
+
+const readiness = {
+  decisionId: "dec_test",
+  checks: [{ code: "commercial-invoice", title: "فاکتور تجاری", status: "required", guidance: "مدارک آماده شود", prepared: false }],
+  outstandingRequired: 1, disclaimer: "تأیید قانونی نیست",
+};
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -37,7 +44,9 @@ describe("shipment comparison", () => {
   it("renders estimate disclosures, air weight, and a local RFQ draft", async () => {
     const fetch = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(json(decision(), 201))
-      .mockResolvedValueOnce(json({ rfqId: "rfq_test", status: "draft", expiresAt: new Date().toISOString() }, 201));
+      .mockResolvedValueOnce(json(readiness))
+      .mockResolvedValueOnce(json({ rfqId: "rfq_test", decisionId: "dec_test", forwarders: ["Atlas Test Cargo"], status: "draft", expiresAt: new Date().toISOString() }, 201))
+      .mockResolvedValueOnce(json({ rfqId: "rfq_test", offers: [], estimateUsd: 3900, cheapest: null, fastest: null, bestValue: null, methodology: "وزن مساوی", disclaimer: "دستی" }));
     render(<App />);
     submitShipment();
     expect(await screen.findByText("Atlas Test Cargo")).toBeInTheDocument();
@@ -46,7 +55,8 @@ describe("shipment comparison", () => {
     fireEvent.click(screen.getByRole("button", { name: "ساخت پیش‌نویس استعلام چندفورواردر" }));
     expect(await screen.findByText(/به هیچ فورواردر ارسال نشده است/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "پیش‌نویس استعلام ثبت شد" })).toBeDisabled();
-    expect(fetch).toHaveBeenLastCalledWith("/api/quotes/request", expect.objectContaining({ body: JSON.stringify({ decisionId: "dec_test", forwarders: ["Atlas Test Cargo"] }) }));
+    expect(fetch).toHaveBeenCalledWith("/api/quotes/request", expect.objectContaining({ body: JSON.stringify({ decisionId: "dec_test", forwarders: ["Atlas Test Cargo"] }) }));
+    expect(fetch).toHaveBeenCalledWith("/api/quotes/rfq_test/offers", undefined);
   });
 
   it("shows network errors and allows retrying an RFQ", async () => {
@@ -125,15 +135,15 @@ describe("history and operational tools", () => {
 
   it("creates manual tracking and uses the selected route for customs checks", async () => {
     const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(json(decision(), 201))
-      .mockResolvedValueOnce(json({ trackingCode: "CIQ-test", decisionId: "dec_test", source: "manual", events: [{ code: "registered", occurredAt: new Date().toISOString() }] }, 201))
-      .mockResolvedValueOnce(json({ checks: [{ code: "invoice", title: "فاکتور تجاری", status: "required", guidance: "مدارک آماده شود" }], disclaimer: "تأیید قانونی نیست" }));
+      .mockResolvedValueOnce(json(readiness))
+      .mockResolvedValueOnce(json({ trackingCode: "CIQ-test", decisionId: "dec_test", source: "manual", events: [{ code: "registered", occurredAt: new Date().toISOString() }] }, 201));
     render(<App />);
     submitShipment();
     await screen.findByText("Atlas Test Cargo");
     fireEvent.click(screen.getByRole("button", { name: "شروع پیگیری دستی این تصمیم" }));
     expect(await screen.findByRole("button", { name: "تأیید دستی: دریافت کالا" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "بررسی مدارک این محموله" }));
     expect(await screen.findByText("تأیید قانونی نیست")).toBeInTheDocument();
-    expect(fetch).toHaveBeenLastCalledWith("/api/compliance/check", expect.objectContaining({ body: JSON.stringify(decision().request) }));
+    expect(screen.getByRole("checkbox", { name: /فاکتور تجاری/ })).not.toBeChecked();
+    expect(fetch).toHaveBeenLastCalledWith("/api/tracking", expect.objectContaining({ body: JSON.stringify({ decisionId: "dec_test" }) }));
   });
 });

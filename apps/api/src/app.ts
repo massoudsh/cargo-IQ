@@ -6,7 +6,8 @@ import { createCopilotRouter } from "./routes/copilot.js";
 import { importsRouter } from "./routes/imports.js";
 import { createShipmentsRouter } from "./routes/shipments.js";
 import { createQuotesRouter } from "./routes/quotes.js";
-import { complianceRouter } from "./routes/compliance.js";
+import { createComplianceRouter } from "./routes/compliance.js";
+import { createLandedCostRouter } from "./routes/landedCost.js";
 import { createTrackingRouter } from "./routes/tracking.js";
 import { rateLimit, tenantGuard } from "./security.js";
 
@@ -25,7 +26,8 @@ export function createApp() {
   app.use("/api/shipments", createShipmentsRouter(store));
   app.use("/api/quotes", createQuotesRouter(store));
   app.use("/api/tracking", createTrackingRouter(store));
-  app.use("/api/compliance", complianceRouter);
+  app.use("/api/compliance", createComplianceRouter(store));
+  app.use("/api/landed-cost", createLandedCostRouter(store));
   app.use("/api/imports", importsRouter);
   app.use("/api/copilot", createCopilotRouter(store));
 

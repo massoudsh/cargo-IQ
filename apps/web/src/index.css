@@ -107,3 +107,15 @@ th small, th time { display: block; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
 @media (prefers-reduced-transparency: reduce) { .topbar { backdrop-filter: none; background: var(--surface); } }
 @media (forced-colors: active) { .status-badge, .badge, .kpi { border: 1px solid ButtonText; } }
+
+.mini-table { width: 100%; min-width: 0; margin-block-start: 1rem; font-size: var(--text-sm); }
+.mini-table small { color: var(--muted); }
+.mini-table tr.excluded { opacity: 0.65; }
+.mini-table tfoot th, .mini-table tfoot td { font-weight: 700; background: var(--surface-subtle); }
+.checklist.readiness { margin-block-start: var(--space-3); }
+.readiness-row { display: flex; gap: var(--space-3); align-items: start; padding-block: var(--space-3); border-block-end: 1px solid var(--soft-border); cursor: pointer; }
+.readiness-row input { min-height: 24px; width: 24px; flex: none; margin-block-start: 0.2rem; }
+.readiness-row > span { display: flex; flex-direction: column; gap: var(--space-1); }
+.readiness-row.required strong { color: var(--danger); }
+.readiness-row.recommended strong { color: var(--warning); }
+.assumptions { padding-inline-start: var(--space-5); }

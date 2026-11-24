@@ -1,7 +1,7 @@
 import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../../app.js";
-import { calculateChargeableWeightKg } from "../../decisionEngine.js";
+import { calculateChargeableWeightKg } from "../../freightMeasures.js";
 
 const shipment = { origin: "China", destination: "Iran", cargoType: "electronics", priority: "balanced" };
 

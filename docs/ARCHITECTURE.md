@@ -65,6 +65,15 @@ The web remains a single React page with hash navigation, not a new routing or s
 
 `npm run check --prefix apps/web` runs lint, typechecking and component/utility/token-contrast tests in the existing CI test path. This is not a browser, screen-reader or visual-regression audit, and no Core Web Vitals claims are made.
 
+## Freight measures and cost tooling
+
+- `apps/api/src/freightMeasures.ts` derives one cargo description into air chargeable kilograms (divisor 6000), LCL revenue tons (weight or measure, whichever is greater) and road loading metres (1 LDM = 1 m of 2.4 m-wide trailer floor). Dimensions take precedence over total cubic volume. These divisors are planning conventions, not the carrier's contract.
+- Every ranked option carries a `billing` basis so the UI can show which unit a forwarder would invoice on. Recommendation payloads also include the raw `measures` used.
+- `apps/api/src/landedCost.ts` builds a landed-cost view from an owned decision. The Incoterm decides whether freight and insurance are already inside the goods price; those lines are reported as `counted: false` and excluded from the total so nothing is added twice. Duty and VAT rates, declared value and the rial FX rate are user-supplied; defaults are zero or a stated percentage and are surfaced as assumptions.
+- RFQ offers are user-recorded only: `POST /api/quotes/:rfqId/offers` accepts a forwarder that belongs to that draft, cost, transit days and optional expiry; `GET` returns a comparison that excludes expired offers from cheapest/fastest/best-value. Nothing is fetched from a forwarder and no offer is validated.
+- Document readiness stores a prepared flag per tenant, decision and document code. It records that a team marked a document available; it is not a file upload, an authenticity check or a clearance.
+- All new collections are in-memory and tenant-scoped, matching the existing store. They are lost on restart.
+
 ## Scale path
 
 Keep the modular monolith until a measured bottleneck appears. Extract candidate data, scoring, and feedback processing independently only when their load or ownership differs. Keep `decisionId`, model/rules version, score breakdown, and input snapshot with every persisted decision so recommendations remain auditable.

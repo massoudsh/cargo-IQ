@@ -5,7 +5,7 @@ FROM node:20-alpine AS build
 WORKDIR /repo/apps/api
 COPY apps/api/package.json apps/api/package-lock.json ./
 RUN npm ci --no-audit --no-fund
-COPY apps/api/tsconfig.json ./
+COPY apps/api/tsconfig.json apps/api/tsconfig.build.json ./
 COPY apps/api/src ./src
 RUN npm run build && npm prune --omit=dev
 

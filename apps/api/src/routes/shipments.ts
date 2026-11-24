@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { calculateConfidence, decisionModelVersion, recommendShipmentOptions } from "../decisionEngine.js";
 import { createDecisionId, type DecisionStore } from "../decisionStore.js";
+import { calculateFreightMeasures } from "../freightMeasures.js";
 import type { ShipmentRequest } from "../types.js";
 
 export function createShipmentsRouter(store: DecisionStore) {
@@ -20,6 +21,7 @@ export function createShipmentsRouter(store: DecisionStore) {
       confidence: calculateConfidence(options),
       request,
       options,
+      measures: calculateFreightMeasures(request),
       constraintsApplied: [`priority:${request.priority}`, "top-3-options"],
       createdAt: new Date().toISOString(),
     };

@@ -91,6 +91,20 @@ RFQ، رهگیری و catalog واردشده در حافظه‌اند؛ RFQ و �
 
 مسیرهای جدید: `POST /api/landed-cost/estimate`، `GET|POST /api/quotes/:rfqId/offers` و `GET|POST /api/compliance/readiness/:decisionId`. پاسخ `recommend` حالا `measures` و `billing` هر گزینه را هم دارد. همهٔ این داده‌ها tenant-scoped و در حافظه‌اند.
 
+## دور سوم مقایسهٔ رقبا و پنج قابلیت تازه
+
+بررسی صفحات عمومی در ۲۰۲۶-۱۱-۲۵. [Flexport](https://www.flexport.com/emissions-calculator/) و [Freightos](https://www.freightos.com/freight-resources/emissions-calculator) هر دو ماشین‌حساب انتشار کربن دارند و Flexport صریحاً می‌گوید محاسبه بر پایهٔ وزن، فاصله و شیوهٔ حمل است؛ Freightos روش EN 16258 و Flexport چارچوب GLEC را مبنا می‌گیرد. [CargoOMS](https://cargooms.com/) ساعت دموراژ و پروندهٔ سند در همان صفحهٔ محموله دارد و ابزارهای مستقل دموراژ/دیتنشن ([Panvaya](https://panvaya.com/demurrage-calculator) و [CargoScope](https://cargoscope.io/tools/demurrage-detention-calculator)) نرخ پله‌ای و روزهای آزاد را حساب می‌کنند. [جیستیکس](https://jistix.io/en) استخراج فیلد از RFQ با درجهٔ اطمینان هر فیلد را تبلیغ می‌کند. از دور اول: Flexport **HS Code Lookup** دارد و [فروهر](https://farvahargroup.com/en/)، [پارتیان ترابر](https://ptpcargo.com/en) و Freightos هر کدام به نوعی زمان تحویل یا برنامهٔ سفر را نشان می‌دهند.
+
+| قابلیت تازه | شکاف رقابتی | پیاده‌سازی و مرز واقعی |
+|---|---|---|
+| برآورد انتشار کربن | رقبای بین‌المللی CO₂e را کنار نرخ نشان می‌دهند | ضریب تقریبی تن-کیلومتر برای هوایی/دریایی/زمینی × وزن و فاصله؛ فاصله از ورودی کاربر یا جدول تقریبی کریدور و در غیر این صورت «نامشخص». گزارش GLEC/EN 16258 نیست. |
+| برنامهٔ زمانی مرحله‌ای | رقبا ETA و milestone برنامه‌ریزی‌شده می‌دهند | پنج مرحله از زمان تحویل تخمینی پخش می‌شود و مرحله‌های گذشته از برنامه علامت می‌خورند. برنامهٔ داخلی است، نه تعهد حامل. |
+| پیشنهاد کد HS | Flexport جست‌وجوی HS دارد | تطبیق واژه‌ای با فصل و heading، با اطمینان «پایین» و توضیح صریح اینکه طبقه‌بندی گمرکی نیست و نرخ عوارض به کد دقیق بستگی دارد. |
+| متن آمادهٔ درخواست نرخ | GetShipBetter و Jistix گردش RFQ را خودکار می‌کنند | متن ساختاریافته از مسیر، وزن، حجم، ابعاد، اینکوترمز و شناسهٔ تصمیم ساخته و در کلیپ‌بورد کپی می‌شود. سامانه پیامی نمی‌فرستد. |
+| برآورد دموراژ | CargoOMS و ابزارهای تخصصی ساعت دموراژ دارند | روزهای نگه‌داری منهای روزهای آزاد، ضرب در نرخ و تعداد کانتینر. تعطیلات، روز شروع شمارش و تعرفهٔ پله‌ای لحاظ نمی‌شود. |
+
+مسیرهای جدید: `GET /api/insights/:decisionId?distanceKm=` و `POST /api/insights/demurrage`. تحلیل‌ها فقط با دکمهٔ کاربر و برای تصمیم همان tenant بارگذاری می‌شوند و در حافظه محاسبه می‌شوند.
+
 ## کنسول UI/UX و وضعیت backlog
 
 بازطراحی بر اساس `uploads/cargo-iq-ai-agent-backlog.md` با حفظ API، محاسبات و مرز tenant انجام شد. محصول فعلی **تصمیم‌یار با دادهٔ نمونه** است، نه سامانهٔ زندهٔ ناوگان؛ شاخص‌های ساختگی، مشتری، پروفایل یا مجوزهای فرضی اضافه نشده‌اند.
@@ -121,7 +135,7 @@ npm ci --prefix apps/api
 npm run lint --prefix apps/api && npm run typecheck --prefix apps/api && npm test --prefix apps/api
 ```
 
-در ۲۰۲۶-۱۱-۲۴، ۴۴ تست وب و ۳۹ تست API موفق شدند. تست‌های رنگ روی جفت‌های token هستند، نه گواهی دسترس‌پذیری UI رندرشده. آزمون‌های بصری، screen-reader، مرورگر، screenshots و Core Web Vitals انجام نشده‌اند. در محیط مناسب، dark/light، RTL/LTR، عرض ۳۲۰px، zoom ۲۰۰٪، keyboard-only، فیلتر/CSV و خطای مجوز را بررسی کنید؛ معیارهای خارج از دامنهٔ محصول نباید completed گزارش شوند.
+در ۲۰۲۶-۱۱-۲۵، ۴۸ تست وب و ۵۵ تست API موفق شدند. تست‌های رنگ روی جفت‌های token هستند، نه گواهی دسترس‌پذیری UI رندرشده. آزمون‌های بصری، screen-reader، مرورگر، screenshots و Core Web Vitals انجام نشده‌اند. در محیط مناسب، dark/light، RTL/LTR، عرض ۳۲۰px، zoom ۲۰۰٪، keyboard-only، فیلتر/CSV و خطای مجوز را بررسی کنید؛ معیارهای خارج از دامنهٔ محصول نباید completed گزارش شوند.
 
 ## License
 

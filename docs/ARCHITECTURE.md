@@ -74,6 +74,16 @@ The web remains a single React page with hash navigation, not a new routing or s
 - Document readiness stores a prepared flag per tenant, decision and document code. It records that a team marked a document available; it is not a file upload, an authenticity check or a clearance.
 - All new collections are in-memory and tenant-scoped, matching the existing store. They are lost on restart.
 
+## Trip insights
+
+- `apps/api/src/insights.ts` computes emissions, a planned milestone schedule, an HS chapter suggestion, a copy-ready RFQ message and demurrage estimates from an owned decision.
+- Emission factors are order-of-magnitude tonnes CO2e per tonne-kilometre per mode. Distance comes from a caller-supplied value, else a small corridor table, else `null`; a lane outside the table returns zero emissions with a note rather than an invented distance. This is not a GLEC/EN 16258 inventory.
+- The planned schedule spreads milestones between decision creation and the first option's transit estimate. It is an internal planning aid and never asserts that goods moved.
+- The HS suggestion matches cargo keywords to a chapter and heading with an explicit `low` confidence and a verification boundary. Duty rates depend on the exact code.
+- The RFQ message is assembled text for the user to copy and send themselves; nothing is transmitted.
+- Demurrage uses calendar days and a flat daily rate with an optional container count. Free-time start rules, holidays and tiered tariffs are out of scope.
+- `GET /api/insights/:decisionId` and `POST /api/insights/demurrage` are tenant-scoped; the client only loads insights on explicit user action.
+
 ## Scale path
 
 Keep the modular monolith until a measured bottleneck appears. Extract candidate data, scoring, and feedback processing independently only when their load or ownership differs. Keep `decisionId`, model/rules version, score breakdown, and input snapshot with every persisted decision so recommendations remain auditable.

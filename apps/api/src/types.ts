@@ -178,3 +178,63 @@ export interface ReadinessResult {
   outstandingRequired: number;
   disclaimer: string;
 }
+
+export interface EmissionEstimate {
+  forwarder: string;
+  mode: ShipmentOption["mode"];
+  co2eKg: number;
+  payloadKg: number;
+  distanceKm: number | null;
+  factorKgPerTonneKm: number;
+}
+
+export interface EmissionsResult {
+  decisionId: string;
+  distanceKm: number | null;
+  distanceSource: "user" | "corridor-table" | "unavailable";
+  estimates: EmissionEstimate[];
+  lowest: string | null;
+  notes: string[];
+  disclaimer: string;
+}
+
+export interface PlannedMilestone {
+  code: MilestoneCode;
+  plannedAt: string;
+  offsetDays: number;
+}
+
+export interface HsSuggestion {
+  chapter: string;
+  heading: string;
+  description: string;
+  matchedOn: string;
+  confidence: "low" | "medium";
+}
+
+export interface DecisionInsights {
+  decisionId: string;
+  emissions: EmissionsResult;
+  schedule: PlannedMilestone[];
+  scheduleBasis: string;
+  hs: HsSuggestion | null;
+  rfqMessage: string;
+}
+
+export interface DemurrageRequest {
+  arrivalDate: string;
+  gateOutDate: string;
+  freeDays: number;
+  dailyRateUsd: number;
+  containers?: number;
+}
+
+export interface DemurrageResult {
+  chargedDays: number;
+  freeDays: number;
+  ratePerContainerDay: number;
+  containers: number;
+  totalUsd: number;
+  notes: string[];
+  disclaimer: string;
+}

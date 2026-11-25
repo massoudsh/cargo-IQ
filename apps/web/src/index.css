@@ -119,3 +119,11 @@ th small, th time { display: block; color: var(--muted); }
 .readiness-row.required strong { color: var(--danger); }
 .readiness-row.recommended strong { color: var(--warning); }
 .assumptions { padding-inline-start: var(--space-5); }
+
+.emissions-list { list-style: none; padding: 0; display: grid; gap: var(--space-3); margin-block: var(--space-3); }
+.emissions-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
+.emissions-list .bar { display: block; height: 8px; border-radius: 999px; background: var(--surface-subtle); border: 1px solid var(--soft-border); overflow: hidden; }
+.emissions-list .bar > span { display: block; height: 100%; background: var(--accent); }
+.timeline.planned li.overdue { color: var(--warning); border-color: var(--warning); }
+.rfq-message { white-space: pre-wrap; font-family: var(--font); background: var(--surface-subtle); border: 1px solid var(--soft-border); border-radius: var(--radius-sm); padding: var(--space-3); font-size: var(--text-sm); }
+.copy-block { margin-block-start: var(--space-4); }

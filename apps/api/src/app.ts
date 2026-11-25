@@ -8,6 +8,7 @@ import { createShipmentsRouter } from "./routes/shipments.js";
 import { createQuotesRouter } from "./routes/quotes.js";
 import { createComplianceRouter } from "./routes/compliance.js";
 import { createLandedCostRouter } from "./routes/landedCost.js";
+import { createInsightsRouter } from "./routes/insights.js";
 import { createTrackingRouter } from "./routes/tracking.js";
 import { rateLimit, tenantGuard } from "./security.js";
 
@@ -28,6 +29,7 @@ export function createApp() {
   app.use("/api/tracking", createTrackingRouter(store));
   app.use("/api/compliance", createComplianceRouter(store));
   app.use("/api/landed-cost", createLandedCostRouter(store));
+  app.use("/api/insights", createInsightsRouter(store));
   app.use("/api/imports", importsRouter);
   app.use("/api/copilot", createCopilotRouter(store));
 

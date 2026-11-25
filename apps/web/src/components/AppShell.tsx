@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 const links = [
   ["overview", "نمای کلی"], ["plan", "برنامه‌ریزی حمل"],
-  ["history", "تصمیم‌ها و گزارش"], ["operations", "پیگیری و مدارک"],
+  ["history", "تصمیم‌ها و گزارش"], ["pricing", "هزینه و پیشنهادها"], ["insights", "تحلیل سفر"], ["operations", "پیگیری و مدارک"],
 ] as const;
 
 function initialTheme() {

@@ -7,6 +7,7 @@ import AppShell from "./components/AppShell";
 import DecisionWorkspace from "./components/DecisionWorkspace";
 import LandedCostPanel from "./components/LandedCostPanel";
 import OffersPanel from "./components/OffersPanel";
+import InsightsPanel from "./components/InsightsPanel";
 import type { RecommendResponse, RfqRequest, ShipmentRequest } from "./types";
 
 export default function App() {
@@ -78,6 +79,7 @@ export default function App() {
         <LandedCostPanel decision={decision} fxRate={fxRate} onFxRate={setFxRate} />
         {rfq ? <OffersPanel key={rfq.rfqId} rfq={rfq} /> : <div className="tool-card"><h3>مقایسهٔ پیشنهادهای دریافتی</h3><p className="hint">برای ثبت و مقایسهٔ پیشنهاد واقعی فورواردرها، ابتدا پیش‌نویس استعلام را بسازید.</p></div>}
       </section>}
+      {decision && <InsightsPanel key={`insights-${decision.decisionId}`} decision={decision} />}
       <section id="operations" tabIndex={-1} aria-label="پیگیری و مدارک">
         <TradeTools key={decision?.decisionId ?? "no-decision"} decision={decision} />
       </section>

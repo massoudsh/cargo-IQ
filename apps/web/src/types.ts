@@ -11,4 +11,8 @@ export type {
   LandedCostResult,
   OfferComparison,
   ReadinessResult,
+  DecisionInsights,
+  DemurrageResult,
+  EmissionEstimate,
+  EmissionsResult,
 } from "../../api/src/types";

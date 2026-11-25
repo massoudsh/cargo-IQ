@@ -8,6 +8,7 @@ import LandedCostPanel from "../components/LandedCostPanel";
 import OffersPanel from "../components/OffersPanel";
 import TradeTools from "../components/TradeTools";
 import ShipmentResults from "../components/ShipmentResults";
+import InsightsPanel from "../components/InsightsPanel";
 import { csvCell, decisionCsv, filterDecisions, type DecisionFilters } from "../decisionReport";
 import { ApiError, requestJson } from "../api";
 import type { RecommendResponse } from "../types";
@@ -224,5 +225,76 @@ describe("rival-inspired pricing and document panels", () => {
     cleanup();
     render(<ShipmentResults options={base.options} onRequestQuotes={vi.fn()} requestPending={false} rfqCreated={false} />);
     expect(screen.queryByText(/ریال/)).not.toBeInTheDocument();
+  });
+});
+
+describe("trip insights panel", () => {
+  const insights = {
+    decisionId: "dec_1",
+    emissions: {
+      decisionId: "dec_1", distanceKm: 6200, distanceSource: "corridor-table" as const,
+      estimates: [
+        { forwarder: "Atlas Test Cargo", mode: "air" as const, co2eKg: 89.3, payloadKg: 24, distanceKm: 6200, factorKgPerTonneKm: 0.6 },
+        { forwarder: "Silk Sea", mode: "sea" as const, co2eKg: 2.4, payloadKg: 24, distanceKm: 6200, factorKgPerTonneKm: 0.016 },
+      ],
+      lowest: "Silk Sea", notes: ["فاصله از جدول تقریبی کریدور خوانده شد"], disclaimer: "برآورد مرتبهٔ بزرگی است",
+    },
+    schedule: [
+      { code: "registered" as const, plannedAt: "2026-01-01T00:00:00Z", offsetDays: 0 },
+      { code: "delivered" as const, plannedAt: "2099-01-06T00:00:00Z", offsetDays: 5 },
+    ],
+    scheduleBasis: "برنامهٔ داخلی است",
+    hs: { chapter: "85", heading: "8507", description: "باتری‌ها", matchedOn: "battery", confidence: "low" as const },
+    rfqMessage: "درخواست نرخ حمل — China به Iran",
+  };
+
+  it("loads analysis only on request and highlights the lowest emitter", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(insights), { headers: { "Content-Type": "application/json" } }));
+    render(<InsightsPanel decision={decision(1)} />);
+    expect(fetch).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "محاسبهٔ تحلیل این تصمیم" }));
+    expect(await screen.findByText("کم‌ترین انتشار")).toBeInTheDocument();
+    expect(screen.getByText(/۸۹٫۳/)).toBeInTheDocument();
+    expect(screen.getByText(/برآورد مرتبهٔ بزرگی است/)).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledWith("/api/insights/dec_1", undefined);
+  });
+
+  it("passes a user distance through to the API", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(insights), { headers: { "Content-Type": "application/json" } }));
+    render(<InsightsPanel decision={decision(1)} />);
+    fireEvent.click(screen.getByRole("button", { name: "محاسبهٔ تحلیل این تصمیم" }));
+    await screen.findByText("کم‌ترین انتشار");
+    fireEvent.change(screen.getByLabelText(/فاصلهٔ مسیر/), { target: { value: "1000" } });
+    await vi.waitFor(() => expect(fetch).toHaveBeenLastCalledWith("/api/insights/dec_1?distanceKm=1000", undefined));
+  });
+
+  it("shows the HS suggestion with its verification boundary and a copyable RFQ text", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(insights), { headers: { "Content-Type": "application/json" } }));
+    render(<InsightsPanel decision={decision(1)} />);
+    fireEvent.click(screen.getByRole("button", { name: "محاسبهٔ تحلیل این تصمیم" }));
+    await screen.findByText(/8507/);
+    expect(screen.getByText(/پیشنهاد اولیه است، نه طبقه‌بندی گمرکی/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "کپی متن درخواست نرخ" }));
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith("درخواست نرخ حمل — China به Iran"));
+    expect(await screen.findByText("کپی شد")).toBeInTheDocument();
+  });
+
+  it("computes demurrage from the entered dates and rate", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(insights), { headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ chargedDays: 7, freeDays: 7, ratePerContainerDay: 50, containers: 2, totalUsd: 700, notes: ["۷ روز فراتر از روزهای آزاد."], disclaimer: "روزهای تقویمی" }), { headers: { "Content-Type": "application/json" } }));
+    render(<InsightsPanel decision={decision(1)} />);
+    fireEvent.click(screen.getByRole("button", { name: "محاسبهٔ تحلیل این تصمیم" }));
+    fireEvent.change(screen.getByLabelText("تاریخ تخلیه"), { target: { value: "2026-11-01" } });
+    fireEvent.change(screen.getByLabelText("تاریخ خروج از بندر"), { target: { value: "2026-11-15" } });
+    fireEvent.change(screen.getByLabelText("نرخ روزانه هر کانتینر (دلار)"), { target: { value: "50" } });
+    fireEvent.change(screen.getByLabelText("تعداد کانتینر"), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: "محاسبهٔ دموراژ" }));
+    expect(await screen.findByText("700")).toBeInTheDocument();
+    expect(fetch).toHaveBeenLastCalledWith("/api/insights/demurrage", expect.objectContaining({
+      body: JSON.stringify({ arrivalDate: "2026-11-01T00:00:00.000Z", gateOutDate: "2026-11-15T00:00:00.000Z", freeDays: 7, dailyRateUsd: 50, containers: 2 }),
+    }));
   });
 });
